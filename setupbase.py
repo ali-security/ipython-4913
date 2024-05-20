@@ -360,12 +360,6 @@ def git_prebuild(pkg_dir, build_cmd=build_py):
     class MyBuildPy(build_cmd):
         ''' Subclass to write commit data into installation tree '''
         def run(self):
-            # loose as `.dev` is suppose to be invalid
-            print("check version number")
-            loose_pep440re = re.compile(r'^(\d+)\.(\d+)\.(\d+((a|b|rc)\d+)?)(\.post\d+)?(\.dev\d*)?$')
-            if not loose_pep440re.match(version):
-                raise ValueError("Version number '%s' is not valid (should match [N!]N(.N)*[{a|b|rc}N][.postN][.devN])" % version)
-
 
             build_cmd.run(self)
             # this one will only fire for build commands

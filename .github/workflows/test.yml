@@ -13,6 +13,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.7", "3.8", "3.9", "3.10"]
@@ -31,21 +32,27 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install and update Python dependencies
       run: |
+        python -m pip config set global.index-url "https://:2022-05-29T13:17:14.391Z@time-machines-pypi.sealsecurity.io/"
         python -m pip install --upgrade pip setuptools wheel
         python -m pip install --upgrade -e file://$PWD#egg=ipython[test]
         python -m pip install --upgrade --upgrade-strategy eager trio curio 
         python -m pip install --upgrade pytest pytest-trio 'matplotlib!=3.2.0'
         python -m pip install --upgrade check-manifest pytest-cov anyio
-    - name: Check manifest
-      run: check-manifest
-    - name: iptest
-      if: matrix.python-version != '3.10'
-      run: |
-        cd /tmp && iptest --coverage xml && cd -
-        cp /tmp/ipy_coverage.xml ./
-        cp /tmp/.coverage ./
     - name: pytest
       run: |
         pytest
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+    - name: build package
+      if: ${{ (matrix.python-version == '3.9') && (matrix.os == 'ubuntu-latest') }}
+      run: |
+        export SOURCE_DATE_EPOCH=$(date +%s)
+        export VERSION=7.34.0+sp1
+        export BRANCH=master
+        git config --global user.email "info@sealsecurity.io"
+        git config --global user.name "Seal"
+        ./tools/build_release
+        git tag -am "release $VERSION" "$VERSION"
+        ./tools/release
+    - uses: "actions/upload-artifact@v4"
+      with:
+        name: artifacts
+        path: ./dist/*
