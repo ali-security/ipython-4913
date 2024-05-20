@@ -84,26 +84,15 @@ elif sys.platform == 'win32':
 
         SetConsoleTitleW = ctypes.windll.kernel32.SetConsoleTitleW
         SetConsoleTitleW.argtypes = [ctypes.c_wchar_p]
-    
+
         def _set_term_title(title):
             """Set terminal title using ctypes to access the Win32 APIs."""
             SetConsoleTitleW(title)
     except ImportError:
         def _set_term_title(title):
-            """Set terminal title using the 'title' command."""
+            """In case ctypes is not available, do nothing and don't try again."""
             global ignore_termtitle
-
-            try:
-                # Cannot be on network share when issuing system commands
-                curr = os.getcwd()
-                os.chdir("C:")
-                ret = os.system("title " + title)
-            finally:
-                os.chdir(curr)
-            if ret:
-                # non-zero return code signals error, don't try again
-                ignore_termtitle = True
-
+            ignore_termtitle = True
 
 def set_term_title(title):
     """Set terminal title using the necessary platform-dependent calls."""
